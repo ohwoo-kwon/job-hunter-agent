@@ -4,8 +4,15 @@ dotenv.load_dotenv()
 
 from crewai import Crew, Agent, Task
 from crewai.project import CrewBase, task, agent, crew
+from crewai.knowledge.source.text_file_knowledge_source import TextFileKnowledgeSource
 from models import JobList, RankedJobList, ChosenJob
 from tools import web_search_tool
+
+resume_knowledge = TextFileKnowledgeSource(
+    file_paths=[
+        "resume.txt",
+    ]
+)
 
 @CrewBase
 class JobHunterCrew:
@@ -21,24 +28,29 @@ class JobHunterCrew:
     def job_matching_agent(self):
         return Agent(
             config=self.agents_config['job_matching_agent'],
+            knowledge_sources=[resume_knowledge],
         )
 
     @agent
     def resume_optimization_agent(self):
         return Agent(
             config=self.agents_config['resume_optimization_agent'],
+            knowledge_sources=[resume_knowledge],
         )
 
     @agent
     def company_research_agent(self):
         return Agent(
             config=self.agents_config['company_research_agent'],
+            tools=[web_search_tool],
+            knowledge_sources=[resume_knowledge],
         )
 
     @agent
     def interview_prep_agent(self):
         return Agent(
             config=self.agents_config['interview_prep_agent'],
+            knowledge_sources=[resume_knowledge],
         )
     
     @task
@@ -96,4 +108,10 @@ class JobHunterCrew:
             verbose=True,
         )
 
-JobHunterCrew().crew().kickoff()
+JobHunterCrew().crew().kickoff(
+    inputs= {
+        'level':'Senior',
+        'position':'Next.js Developer',
+        'location':'Korea',
+    }
+)
